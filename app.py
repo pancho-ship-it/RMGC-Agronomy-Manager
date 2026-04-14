@@ -3,19 +3,16 @@ from datetime import datetime
 from functools import wraps
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 
-if getattr(sys, 'frozen', False):
-    BASE_DIR     = os.path.dirname(sys.executable)
-    TEMPLATE_DIR = os.path.join(sys._MEIPASS, 'templates')
-else:
-    BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # On cloud servers (Render etc.) the app directory is read-only.
 # Use /tmp for writable storage, fall back to app directory locally.
 _tmp_data = '/tmp/rmgc_data.json'
 _local_data = os.path.join(BASE_DIR, 'data.json')
 DATA_FILE = _tmp_data if not os.access(BASE_DIR, os.W_OK) else _local_data
-app = Flask(__name__, template_folder=TEMPLATE_DIR)
+
+# Use Flask default templates/ folder next to app.py
+app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'rmgc-change-this-secret-2024')
 
 # ── USER ACCOUNTS ─────────────────────────────────────────────────────────────
