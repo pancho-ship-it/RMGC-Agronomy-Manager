@@ -402,11 +402,178 @@ def load_data():
 def save_data(data):
     with open(DATA_FILE,'w',encoding='utf-8') as f: json.dump(data,f,ensure_ascii=False,indent=2)
 
+LOGIN_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMGC Stock Manager – Login</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0e0f11;
+    color: #f0f0f0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: #161719;
+    border: 1px solid #2a2c31;
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .logo-wrap img {
+    height: 72px;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  .logo-wrap h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #f0f0f0;
+    margin-top: 0.75rem;
+    letter-spacing: 0.03em;
+  }
+  .logo-wrap p {
+    color: #7a7d85;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #7a7d85;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+    margin-top: 1.1rem;
+  }
+  input {
+    width: 100%;
+    background: #1e2024;
+    border: 1px solid #2a2c31;
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    color: #f0f0f0;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #e8442a; }
+  .btn {
+    width: 100%;
+    margin-top: 1.6rem;
+    padding: 0.8rem;
+    background: #e8442a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn:hover { background: #c73a23; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { background: #555; cursor: not-allowed; }
+  .error {
+    margin-top: 1rem;
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.4);
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    color: #ef4444;
+    font-size: 0.88rem;
+    display: none;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-wrap">
+    <img src="/logo" alt="RMGC Logo" onerror="this.style.display='none'">
+    <h1>RMGC Stock Manager</h1>
+    <p>Sign in to continue</p>
+  </div>
+
+  <label for="username">Username</label>
+  <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+
+  <label for="password">Password</label>
+  <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+
+  <div class="error" id="error-msg">Invalid username or password.</div>
+
+  <button class="btn" id="login-btn" onclick="doLogin()">Sign In</button>
+</div>
+
+<script>
+  // Allow pressing Enter to submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  async function doLogin() {
+    const btn = document.getElementById('login-btn');
+    const err = document.getElementById('error-msg');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    err.style.display = 'none';
+    if (!username || !password) {
+      err.textContent = 'Please enter your username and password.';
+      err.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    try {
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        window.location.href = '/';
+      } else {
+        err.textContent = data.error || 'Invalid username or password.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    } catch(e) {
+      err.textContent = 'Connection error. Please try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  }
+</script>
+</body>
+</html>
+"""
+
 @app.route('/login', methods=['GET'])
 def login_page():
     if 'user' in session:
         return redirect(url_for('index'))
-    return render_template('login.html')
+    return LOGIN_HTML
 
 @app.route('/login', methods=['POST'])
 def do_login():
