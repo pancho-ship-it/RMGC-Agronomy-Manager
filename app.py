@@ -10,7 +10,11 @@ else:
     BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
     TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
-DATA_FILE = os.path.join(BASE_DIR, 'data.json')
+# On cloud servers (Render etc.) the app directory is read-only.
+# Use /tmp for writable storage, fall back to app directory locally.
+_tmp_data = '/tmp/rmgc_data.json'
+_local_data = os.path.join(BASE_DIR, 'data.json')
+DATA_FILE = _tmp_data if not os.access(BASE_DIR, os.W_OK) else _local_data
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 app.secret_key = os.environ.get('SECRET_KEY', 'rmgc-change-this-secret-2024')
 
@@ -559,6 +563,11 @@ def upd_calc(cid):
 def del_calc(cid):
     data=load_data(); data['calc']=[c for c in data['calc'] if str(c['id'])!=str(cid)]
     save_data(data); return jsonify({'ok':True})
+
+@app.errorhandler(500)
+def internal_error(e):
+    import traceback
+    return f"<pre>500 Internal Server Error:\n{traceback.format_exc()}</pre>", 500
 
 if __name__=='__main__':
     port = int(os.environ.get('PORT', 5000))
